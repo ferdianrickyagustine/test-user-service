@@ -1,4 +1,3 @@
-import { Exclude } from "class-transformer";
 import { IsOptional, IsString, MinLength } from "class-validator";
 
 export class UpdateUserDto {
@@ -33,9 +32,6 @@ export class UserProfile {
     role: string
     createdAt: Date
     updatedAt: Date
-
-    @Exclude()
-    password: string
 }
 
 export class UpdatePasswordDto {
