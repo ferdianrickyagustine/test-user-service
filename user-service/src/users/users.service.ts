@@ -2,10 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdatePasswordDto, UpdateUserDto, UserProfile } from './dto/user.dto';
 import * as bcrypt from 'bcryptjs';
+import { FirebaseService } from 'src/firebase/firebase.service';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private firebaseService: FirebaseService
+  ) {}
 
 
   async getProfile(userId: string): Promise<UserProfile> {
@@ -21,6 +25,14 @@ export class UsersService {
   }
 
   async updateProfile(userId: string, updateData: UpdateUserDto): Promise<UserProfile> {
+    const currentUser = await this.prisma.user.findUnique({
+        where: { id: userId}
+    })
+
+    if (!currentUser) {
+        throw new NotFoundException('User not found')
+    }
+
     if (updateData.email) {
         const existingUser = await this.prisma.user.findUnique({
             where: { email: updateData.email },
@@ -35,6 +47,12 @@ export class UsersService {
         where: { id: userId },
         data: updateData
     })
+
+    await this.firebaseService.sendNotificationToAdmins(
+        'User Profile Updated',
+        `User ${currentUser.name} has updated their profile`,
+        { userId, changes: updateData, previousName: currentUser.name }
+    )
 
     return updatedUser as UserProfile
   }
