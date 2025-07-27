@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { UpdatePasswordDto, UpdateUserDto, UserProfile } from './dto/user.dto';
+import { CreateUserDto, UpdatePasswordDto, UpdateUserDto, UserProfile } from './dto/user.dto';
 import * as bcrypt from 'bcryptjs';
 import { FirebaseService } from 'src/firebase/firebase.service';
 
@@ -87,4 +87,59 @@ export class UsersService {
 
         return users as UserProfile[]
     }
+
+    async updateUser(userId: string, updateData: UpdateUserDto): Promise<UserProfile> {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId }
+        })
+
+        if (!user) {
+            throw new NotFoundException('User tidak ditemukan');
+        }
+
+        if (updateData.email) {
+            const existingUser = await this.prisma.user.findUnique({
+                where: { email: updateData.email },
+            })
+            if (existingUser && existingUser.id !== userId) {
+                throw new NotFoundException('Email sudah digunakan oleh pengguna lain')
+            }
+        }
+        const updatedUser = await this.prisma.user.update({
+            where: { id: userId },
+            data: updateData
+        })
+
+        return updatedUser as UserProfile;
+    }
+
+    async createUser(createUserDto: CreateUserDto): Promise<UserProfile> {
+    const { email, password, name, phone, position, role } = createUserDto;
+
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('User with this email already exists');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        name,
+        phone,
+        position,
+        role: role || 'EMPLOYEE',
+      },
+    });
+
+
+    const { password: _, ...userWithoutPassword } = user;
+
+    return userWithoutPassword as UserProfile
+  }
 }

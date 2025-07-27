@@ -1,4 +1,4 @@
-import { IsOptional, IsString, MinLength } from "class-validator";
+import { IsEmail, IsIn, IsOptional, IsString, MinLength } from "class-validator";
 
 export class UpdateUserDto {
     @IsOptional()
@@ -32,6 +32,30 @@ export class UserProfile {
     role: string
     createdAt: Date
     updatedAt: Date
+}
+
+export class CreateUserDto {
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  @MinLength(6)
+  password: string;
+
+  @IsString()
+  name: string;
+
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @IsOptional()
+  @IsString()
+  position?: string;
+
+  @IsOptional()
+  @IsIn(['EMPLOYEE', 'ADMIN'])
+  role?: string;
 }
 
 export class UpdatePasswordDto {

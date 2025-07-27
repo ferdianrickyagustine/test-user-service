@@ -49,4 +49,16 @@ export class UsersController {
     async getAllUsers(@Request() req): Promise<UserProfile[]> {
         return this.usersService.getAllUsers()
     }
+
+    @Roles(['ADMIN'])
+    @Put(':id')
+    async updateUser(@Request() req, @Body() updateUserDto: UpdateUserDto): Promise<UserProfile> {
+        return this.usersService.updateUser(req.params.id, updateUserDto);
+    }
+
+    @Roles(['ADMIN'])
+    @Get(':id')
+    async getUserById(@Request() req): Promise<UserProfile> {
+        return this.usersService.getProfile(req.params.id)
+    }
 }
