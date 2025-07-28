@@ -9,11 +9,11 @@ export class UsersService {
     constructor(
         private prisma: PrismaService,
         private firebaseService: FirebaseService
-    ) {}
+    ) { }
 
 
     async getProfile(userId: string): Promise<UserProfile> {
-        const user =  await this.prisma.user.findUnique({
+        const user = await this.prisma.user.findUnique({
             where: { id: userId },
         })
 
@@ -26,18 +26,17 @@ export class UsersService {
 
     async updateProfile(userId: string, updateData: UpdateUserDto): Promise<UserProfile> {
         const currentUser = await this.prisma.user.findUnique({
-            where: { id: userId}
-        })
+            where: { id: userId }
+        });
 
         if (!currentUser) {
-            throw new NotFoundException('User not found')
+            throw new NotFoundException('User not found');
         }
 
         if (updateData.email) {
             const existingUser = await this.prisma.user.findUnique({
                 where: { email: updateData.email },
-            })
-
+            });
             if (existingUser && existingUser.id !== userId) {
                 throw new NotFoundException('Email already in use by another user');
             }
@@ -46,15 +45,19 @@ export class UsersService {
         const updatedUser = await this.prisma.user.update({
             where: { id: userId },
             data: updateData
-        })
+        });
 
-        await this.firebaseService.sendNotificationToAdmins(
-            'User Profile Updated',
-            `User ${currentUser.name} has updated their profile`,
-            { userId, changes: updateData, previousName: currentUser.name }
-        )
+        try {
+            await this.firebaseService.sendNotificationToAdmins(
+                'User Profile Updated',
+                `User ${currentUser.name} has updated their profile`,
+                { userId, changes: updateData, previousName: currentUser.name }
+            );
+        } catch (error) {
+            console.error('Gagal kirim notifikasi ke admin:', error);
+        }
 
-        return updatedUser as UserProfile
+        return updatedUser as UserProfile;
     }
 
     async changePassword(userId: string, passwordData: UpdatePasswordDto): Promise<{ message: string }> {
@@ -114,32 +117,32 @@ export class UsersService {
     }
 
     async createUser(createUserDto: CreateUserDto): Promise<UserProfile> {
-    const { email, password, name, phone, position, role } = createUserDto;
+        const { email, password, name, phone, position, role } = createUserDto;
 
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email },
-    });
+        const existingUser = await this.prisma.user.findUnique({
+            where: { email },
+        });
 
-    if (existingUser) {
-      throw new ConflictException('User with this email already exists');
+        if (existingUser) {
+            throw new ConflictException('User with this email already exists');
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const user = await this.prisma.user.create({
+            data: {
+                email,
+                password: hashedPassword,
+                name,
+                phone,
+                position,
+                role: role || 'EMPLOYEE',
+            },
+        });
+
+
+        const { password: _, ...userWithoutPassword } = user;
+
+        return userWithoutPassword as UserProfile
     }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await this.prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name,
-        phone,
-        position,
-        role: role || 'EMPLOYEE',
-      },
-    });
-
-
-    const { password: _, ...userWithoutPassword } = user;
-
-    return userWithoutPassword as UserProfile
-  }
 }

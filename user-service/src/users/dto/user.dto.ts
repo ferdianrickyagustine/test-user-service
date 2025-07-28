@@ -20,6 +20,10 @@ export class UpdateUserDto {
     @IsOptional()
     @IsString()
     position?: string
+
+    @IsOptional()
+    @IsString()
+    fcmToken?: string
 }
 
 export class UserProfile {

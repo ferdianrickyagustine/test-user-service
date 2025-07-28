@@ -1,7 +1,7 @@
-import { Body, Controller, Get, Put, Request, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Request, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import { UsersService } from './users.service';
-import { UpdatePasswordDto, UpdateUserDto, UserProfile } from './dto/user.dto';
+import { CreateUserDto, UpdatePasswordDto, UpdateUserDto, UserProfile } from './dto/user.dto';
 import { RolesGuard } from 'src/guards/roles.guard';
 import { Roles } from 'src/decorators/roles.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -44,6 +44,11 @@ export class UsersController {
         return { message: 'Password updated successfully' };
     }
 
+    @Put('fcm-token')
+    async updateFcmToken(@Request() req, @Body() body: { fcmToken: string }) {
+        return this.usersService.updateProfile(req.user.sub, { fcmToken: body.fcmToken });
+    }
+
     @Roles(['ADMIN'])
     @Get('all')
     async getAllUsers(@Request() req): Promise<UserProfile[]> {
@@ -60,5 +65,11 @@ export class UsersController {
     @Get(':id')
     async getUserById(@Request() req): Promise<UserProfile> {
         return this.usersService.getProfile(req.params.id)
+    }
+
+    @Roles(['ADMIN'])
+    @Post('create')
+    async createUser(@Body() createUserDto: CreateUserDto): Promise<UserProfile> {
+        return this.usersService.createUser(createUserDto);
     }
 }
