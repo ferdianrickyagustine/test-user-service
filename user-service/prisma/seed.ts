@@ -1,5 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
-import * as bcrypt from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -34,7 +34,7 @@ async function main() {
       role: 'EMPLOYEE',
     },
   });
-  console.log(`Seeding completed for ${admin} and ${employee}`);
+  console.log(`Seeding completed for ${admin.email} and ${employee.email}`);
 }
 
 main()
