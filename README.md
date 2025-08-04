@@ -18,7 +18,10 @@ Install dependencies:
 ```
 npm install
 ```
-
+Lakukan seeding dengan:
+```
+npx prisma db seed
+```
 ---
 
 # Endpoint Utama
