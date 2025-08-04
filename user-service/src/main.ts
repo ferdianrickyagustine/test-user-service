@@ -6,7 +6,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.enableCors()
-  app.useStaticAssets(join(__dirname, '..', 'uploads'))
+  app.useStaticAssets(join(process.cwd(), 'uploads'))
   await app.listen(process.env.PORT ?? 3001);
 }
 bootstrap();
